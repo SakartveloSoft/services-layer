@@ -1,0 +1,17 @@
+{
+  "extends": "@tsconfig/node12/tsconfig.json",
+  "compilerOptions": {
+    "sourceMap": true,
+    "outDir": "./dist",
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "declaration": true
+  },
+  "include": ["src/**/*.ts",
+    "src/test/*.*"
+  ],
+  "exclude": [
+    "dist",
+    "node_modules"
+  ]
+}

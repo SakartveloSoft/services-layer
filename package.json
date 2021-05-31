@@ -1,0 +1,29 @@
+{
+  "name": "services-layer",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SakartveloSoft/services-layer.git"
+  },
+  "author": {
+    "name": "Kote Isaev at SakartveloSoft",
+    "url": "www.sakartvelosoft.com",
+    "email": "kote.isaev@sakartvelosoft.com"
+  },
+  "license": "",
+  "bugs": {
+    "url": "https://github.com/SakartveloSoft/services-layer/issues"
+  },
+  "homepage": "https://github.com/SakartveloSoft/services-layer#readme",
+  "dependencies": {
+    "@sakartvelosoft/type-system": "^0.2.3"
+  },
+  "devDependencies": {
+    "@tsconfig/node12": "^1.0.7"
+  }
+}

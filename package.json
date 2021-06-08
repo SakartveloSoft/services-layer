@@ -2,9 +2,10 @@
   "name": "services-layer",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha -r ts-node/register src/test/**/*-test.ts",
+    "prepublish": "tsc"
   },
   "repository": {
     "type": "git",
@@ -24,6 +25,14 @@
     "@sakartvelosoft/type-system": "^0.2.3"
   },
   "devDependencies": {
-    "@tsconfig/node12": "^1.0.7"
+    "@tsconfig/node12": "^1.0.7",
+    "@types/chai": "^4.2.18",
+    "@types/mocha": "^8.2.2",
+    "@types/node": "^15.12.2",
+    "chai": "^4.3.4",
+    "mocha": "^9.0.0",
+    "nyc": "^15.1.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.3.2"
   }
 }

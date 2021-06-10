@@ -1,7 +1,6 @@
-import {pluginOf} from "./plugins";
-import {string} from "@sakartvelosoft/type-system";
+import {pluginWithToken} from "./plugins";
 
-type CallbackType<ValuesT=any> = (values:Partial<ValuesT>) => void;
+type CallbackType<ValuesT=any> = (values:ValuesT) => void;
 
 
 class EventReference<ValuesT = any, ResultT = void> {
@@ -26,10 +25,11 @@ class EventReference<ValuesT = any, ResultT = void> {
                 this.remove(realCallback);
             }
         }
+        this.add(realCallback);
     }
     notify(v:Partial<ValuesT>):void {
         for(let callback of this._callbacks) {
-            callback(v);
+            callback(v as ValuesT);
         }
     }
 }
@@ -37,22 +37,26 @@ export class EventData {
 
 }
 
+function getItemFromMap<T extends {}>(items:Map<string, object>, key:string, factory:() => T):T {
+    let entry:T;
+    let rawEntry = items.get(key);
+    if (!rawEntry) {
+        entry = factory();
+        items.set(key, entry);
+    } else {
+        entry = rawEntry as T;
+        if (!entry) {
+            entry = factory();
+            items.set(key, entry);
+        }
+    }
+    return entry;
+}
+
 abstract class EventEmitterBase {
     private readonly _events:Map<string, Object> = new Map<string, Object>();
-    protected getEventEntry<T=EventData>(event:EventClass<T>):EventReference<T> {
-        let callbackEntry:EventReference<T>;
-        let entry = this._events.get(event.name);
-        if (!entry) {
-            callbackEntry = new EventReference<T>();
-            this._events.set(event.name, callbackEntry);
-        } else {
-            callbackEntry = entry as EventReference<T>;
-            if (!callbackEntry) {
-                callbackEntry = new EventReference<T>();
-                this._events.set(event.name, callbackEntry);
-            }
-        }
-        return callbackEntry;
+    protected getEventEntry<T extends EventData>(event:EventClass<T>):EventReference<T> {
+        return getItemFromMap<EventReference<T>>(this._events, event.name, () => new EventReference<T>());
     }
 
 }
@@ -81,30 +85,35 @@ export class OwnedEventData<TOwner extends {}> extends EventData {
 
 
 
-
-export class OwnedEmitter<TOwner extends {}> extends EventEmitterBase{
+export type OwnedEventClass<HostType, EventType extends OwnedEventData<HostType>> = { new (host:HostType):EventType}
+export class OwnedEmitter<TOwner extends {}> {
+    private _events = new Map<string, Object>()
     constructor(protected owner:TOwner) {
-        super();
+    }
+    protected getOwnedEventEntry<T extends OwnedEventData<TOwner>>(event:OwnedEventClass<TOwner,T>):EventReference<T> {
+        return getItemFromMap<EventReference<T>>(
+            this._events,
+            event.name,
+            () => new EventReference<T>());
     }
 
-    on<T = OwnedEventData<TOwner>>(event: EventClass<T>, callback: CallbackType<T>) {
-        super.getEventEntry(event).add(callback);
+    on<T extends OwnedEventData<TOwner>>(event: OwnedEventClass<TOwner, T>, callback: CallbackType<T>) {
+        this.getOwnedEventEntry<T>(event).add(callback);
     }
-    off<T = OwnedEventData<TOwner>>(event:EventClass<T>, callback: CallbackType<T>) {
-        super.getEventEntry(event).remove(callback);
+    off<T extends OwnedEventData<TOwner>>(event:OwnedEventClass<TOwner, T>, callback: CallbackType<T>) {
+        this.getOwnedEventEntry(event).remove(callback);
     }
-    once<T = OwnedEventData<TOwner>>(event:EventClass<T>, callback:CallbackType<T>) {
-        super.getEventEntry(event).addOnce(callback);
+    once<T extends OwnedEventData<TOwner>>(event:OwnedEventClass<TOwner,T>, callback:CallbackType<T>) {
+        this.getOwnedEventEntry(event).addOnce(callback);
     }
-    emit<T = OwnedEventData<TOwner>>(event:EventClass<T>, values:Partial<T>) {
-        super.getEventEntry(event).notify({...values, source: this.owner });
+    emit<T extends OwnedEventData<TOwner>>(event:OwnedEventClass<TOwner, T>, values:Partial<T>) {
+        this.getOwnedEventEntry(event).notify({...values, source: this.owner });
     }
 }
 
+const eventsRef = Symbol('Events ref');
+
+
 export function eventsOf<T extends {}>(owner:T):OwnedEmitter<T> {
-    return pluginOf<T, OwnedEmitter<T>>(owner, class OwnedEventsPlugin extends OwnedEmitter<T>{
-        constructor() {
-            super(owner);
-        }
-    });
+    return pluginWithToken<T, OwnedEmitter<T>>(owner, OwnedEmitter, eventsRef);
 }
